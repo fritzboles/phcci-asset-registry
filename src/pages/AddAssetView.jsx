@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient.js'
+import QRScanner from '../components/QRScanner.jsx'
 
 const STATUS_OPTIONS = ['Active', 'Under Repair', 'Disposed', 'Missing']
 
@@ -8,6 +9,7 @@ export default function AddAssetView() {
   const [departments, setDepartments] = useState([])
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState(null)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -37,12 +39,17 @@ export default function AddAssetView() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  function handleScanResult(decodedText) {
+    setScannerOpen(false)
+    updateField('qr_code', decodedText)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setResult(null)
 
     if (!form.name.trim() || !form.qr_code.trim()) {
-      setResult({ type: 'error', message: 'Asset name and QR code are required.' })
+      setResult({ type: 'error', message: 'Asset name and a scanned QR code are required.' })
       return
     }
 
@@ -127,12 +134,22 @@ export default function AddAssetView() {
 
         <label>
           QR code *
-          <input
-            type="text"
-            value={form.qr_code}
-            onChange={(e) => updateField('qr_code', e.target.value)}
-            placeholder="Paste the code from the asset's QR sticker"
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              value={form.qr_code}
+              readOnly
+              placeholder="Tap Scan to read the sticker"
+              style={{ flex: 1, background: '#F5F4F0' }}
+            />
+            <button
+              type="button"
+              className="qr-scan-button"
+              onClick={() => setScannerOpen(true)}
+            >
+              📷 Scan
+            </button>
+          </div>
         </label>
 
         <label>
@@ -158,7 +175,7 @@ export default function AddAssetView() {
         </label>
 
         <label>
-          Department for Head Office
+          Department
           <select
             value={form.department_id}
             onChange={(e) => updateField('department_id', e.target.value)}
@@ -203,7 +220,7 @@ export default function AddAssetView() {
         </label>
 
         <label>
-          Photo of asset
+          Photo
           <input
             type="file"
             accept="image/*"
@@ -221,6 +238,10 @@ export default function AddAssetView() {
           </p>
         )}
       </form>
+
+      {scannerOpen && (
+        <QRScanner onScan={handleScanResult} onClose={() => setScannerOpen(false)} />
+      )}
     </>
   )
 }

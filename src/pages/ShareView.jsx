@@ -77,7 +77,7 @@ export default function ShareView() {
 
   function handleExport() {
     const rows = filteredAssets.map((a) => ({
-      'Asset Number': a.qr_code,
+      'Asset Number': a.asset_number,
       'Asset': a.name,
       'Serial No.': a.serial_number || '',
       'Branch': a.branch_name || 'Head Office',
@@ -153,7 +153,7 @@ export default function ShareView() {
           <tbody>
             {filteredAssets.map((a) => (
               <tr key={a.id}>
-                <td>{a.qr_code}</td>
+                <td>{a.asset_number}</td>
                 <td>{a.name}</td>
                 <td>{a.serial_number || '—'}</td>
                 <td>{a.branch_name || 'Head Office'}</td>
