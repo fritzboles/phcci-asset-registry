@@ -52,14 +52,19 @@ export default function ShareView() {
     return branches.filter((b) => b.location_type === scope)
   }, [branches, scope])
 
-  const filteredAssets = useMemo(() => {
+    const filteredAssets = useMemo(() => {
     return assets.filter((a) => {
-      if (scope) {
+      if (scope === 'head_office') {
+        if (a.branch_id !== null) return false
+        if (selectedDept && a.department_id !== selectedDept) return false
+        return true
+      }
+      if (scope === 'branch' || scope === 'satellite') {
         const branch = branches.find((b) => b.id === a.branch_id)
         if (!branch || branch.location_type !== scope) return false
+        if (selectedLocation && a.branch_id !== selectedLocation) return false
+        return true
       }
-      if (selectedLocation && a.branch_id !== selectedLocation) return false
-      if (scope === 'head_office' && selectedDept && a.department_id !== selectedDept) return false
       return true
     })
   }, [assets, branches, scope, selectedLocation, selectedDept])

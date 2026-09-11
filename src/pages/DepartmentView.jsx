@@ -5,28 +5,22 @@ import AssetCard from '../components/AssetCard.jsx'
 export default function DepartmentView() {
   const [departments, setDepartments] = useState([])
   const [selectedDept, setSelectedDept] = useState('')
-  const [headOfficeId, setHeadOfficeId] = useState(null)
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadOptions() {
-      const [{ data: deptData }, { data: hoData }] = await Promise.all([
-        supabase.from('departments').select('*').order('name'),
-        supabase.from('branches').select('*').eq('location_type', 'head_office').maybeSingle(),
-      ])
-      setDepartments(deptData || [])
-      setHeadOfficeId(hoData?.id || null)
+    async function loadDepartments() {
+      const { data } = await supabase.from('departments').select('*').order('name')
+      setDepartments(data || [])
     }
-    loadOptions()
+    loadDepartments()
   }, [])
 
   useEffect(() => {
     let active = true
     async function loadAssets() {
       setLoading(true)
-      let query = supabase.from('assets').select('*').order('name')
-      if (headOfficeId) query = query.eq('branch_id', headOfficeId)
+      let query = supabase.from('assets').select('*').is('branch_id', null).order('name')
       if (selectedDept) query = query.eq('department_id', selectedDept)
       const { data, error } = await query
       if (active) {
@@ -34,16 +28,16 @@ export default function DepartmentView() {
         setLoading(false)
       }
     }
-    if (headOfficeId !== null) loadAssets()
+    loadAssets()
     return () => { active = false }
-  }, [selectedDept, headOfficeId])
+  }, [selectedDept])
 
   return (
     <>
       <div className="page-header">
         <div>
           <h1>By department</h1>
-          <p>Head Office assets grouped by department. Branch and satellite assets aren't tracked by department.</p>
+          <p>Head Office assets grouped by department (assets with no branch assigned). Branch and satellite assets aren't tracked by department.</p>
         </div>
       </div>
 
@@ -58,10 +52,6 @@ export default function DepartmentView() {
 
       {loading ? (
         <p className="status-line">Loading assets…</p>
-      ) : !headOfficeId ? (
-        <div className="empty-state">
-          No Head Office branch is set up yet. In Supabase's branches table, set one row's location_type to head_office.
-        </div>
       ) : assets.length === 0 ? (
         <div className="empty-state">No assets found for this department yet.</div>
       ) : (
